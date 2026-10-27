@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberSec | Analisador de Senhas</title>
+  <style>
+    body {
+      background-color: #0d1117; /* Fundo escuro estilo GitHub/Terminal */
+      color: #c9d1d9;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #161b22;
+      padding: 30px;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+      box-shadow: 0 10px 30px rgba(0,255,0,0.05);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 { 
+      text-align: center; 
+      color: #58a6ff; 
+      margin-top: 0;
+    }
+    .input-group {
+      position: relative;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 15px 0;
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      color: #58a6ff;
+      border-radius: 6px;
+      font-size: 18px;
+      font-family: inherit;
+      box-sizing: border-box;
+      outline: none;
+    }
+    input:focus {
+      border-color: #58a6ff;
+    }
+    .strength-meter {
+      height: 6px;
+      background-color: #30363d;
+      border-radius: 3px;
+      margin: 10px 0 20px 0;
+      overflow: hidden;
+    }
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: all 0.4s ease-out;
+    }
+    ul { 
+      list-style: none; 
+      padding: 0; 
+      font-size: 14px; 
+    }
+    li { 
+      margin: 8px 0; 
+      color: #f85149; /* Vermelho para inválido */
+      transition: color 0.3s; 
+      display: flex;
+      align-items: center;
+    }
+    li.valid { 
+      color: #2ea043; /* Verde para válido */
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #238636;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: background-color 0.2s;
+    }
+    button:hover { 
+      background-color: #2ea043; 
+    }
+    .status-text {
+      text-align: right;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: -15px;
+      margin-bottom: 15px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>[ Cyber_Sec_Auth ]</h2>
+    
+    <div class="input-group">
+      <input type="text" id="password" placeholder="Digite uma palavra-passe...">
+    </div>
+    
+    <div class="strength-meter">
+      <div class="strength-bar" id="bar"></div>
+    </div>
+    <span class="status-text" id="status-text" style="color: #8b949e;">Vazia</span>
+    
+    <ul id="criteria">
+      <li id="length">[ ✗ ] Mínimo de 8 caracteres</li>
+      <li id="upper">[ ✗ ] Pelo menos 1 letra maiúscula</li>
+      <li id="lower">[ ✗ ] Pelo menos 1 letra minúscula</li>
+      <li id="number">[ ✗ ] Pelo menos 1 número</li>
+      <li id="special">[ ✗ ] Caractere especial (!@#$%)</li>
+    </ul>
+
+    <button onclick="generatePassword()">> GERAR CHAVE SEGURA</button>
+  </div>
+
+  <script>
+    const passwordInput = document.getElementById('password');
+    const bar = document.getElementById('bar');
+    const statusText = document.getElementById('status-text');
+    
+    // Expressões Regulares (Regex) - O coração da validação de segurança
+    const criteria = {
+      length: /.{8,}/,
+      upper: /[A-Z]/,
+      lower: /[a-z]/,
+      number: /[0-9]/,
+      special: /[!@#$%^&*(),.?":{}|<>_+-]/
+    };
+
+    // Função que verifica a senha cada vez que o utilizador digita
+    passwordInput.addEventListener('input', () => {
+      const pass = passwordInput.value;
+      let score = 0;
+
+      if (pass.length === 0) {
+        bar.style.width = '0%';
+        statusText.textContent = 'Vazia';
+        statusText.style.color = '#8b949e';
+        resetCriteria();
+        return;
+      }
+
+      // Verifica cada regra criptográfica
+      for (const key in criteria) {
+        const el = document.getElementById(key);
+        if (criteria[key].test(pass)) {
+          el.classList.add('valid');
+          el.innerHTML = el.innerHTML.replace('[ ✗ ]', '[ ✓ ]');
+          score++;
+        } else {
+          el.classList.remove('valid');
+          el.innerHTML = el.innerHTML.replace('[ ✓ ]', '[ ✗ ]');
+        }
+      }
+
+      // Atualiza a interface visual (Barra de progresso e Cores)
+      bar.style.width = (score / 5) * 100 + '%';
+      
+      if (score <= 2) {
+        bar.style.backgroundColor = '#f85149'; // Fraca - Vermelho
+        statusText.textContent = 'Vulnerável';
+        statusText.style.color = '#f85149';
+      } else if (score <= 4) {
+        bar.style.backgroundColor = '#d29922'; // Média - Amarelo
+        statusText.textContent = 'Razoável';
+        statusText.style.color = '#d29922';
+      } else {
+        bar.style.backgroundColor = '#2ea043'; // Forte - Verde
+        statusText.textContent = 'Segura';
+        statusText.style.color = '#2ea043';
+      }
+    });
+
+    function resetCriteria() {
+      const listItems = document.querySelectorAll('#criteria li');
+      listItems.forEach(li => {
+        li.classList.remove('valid');
+        li.innerHTML = li.innerHTML.replace('[ ✓ ]', '[ ✗ ]');
+      });
+    }
+
+    // Algoritmo simples de geração de palavra-passe
+    function generatePassword() {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*_-+=";
+      let newPass = "";
+      
+      // Gera uma senha de 16 caracteres com alta entropia
+      for (let i = 0; i < 16; i++) {
+        // Seleciona um caractere aleatório seguro usando matemática
+        newPass += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      passwordInput.value = newPass;
+      // Dispara o evento 'input' para forçar a validação da nova senha gerada
+      passwordInput.dispatchEvent(new Event('input')); 
+    }
+  </script>
+</body>
+</html>
